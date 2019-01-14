@@ -17,6 +17,14 @@ Currently, no unit tests have been written. Race conditions have been explored u
 go run -race main.go
 ```
 
+## Cleaning
+
+circleci-lint was used as a static analysis tool. True positives were dealt with.
+
+```bash
+circleci-lint run
+```
+
 ## Further Development
 
 See also the inline notes in code.
