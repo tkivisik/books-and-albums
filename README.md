@@ -2,13 +2,13 @@
 
 ## Project Structure
 
-.
-├── albumrequest
-│   └── main.go
-├── bookrequest
-│   └── main.go
-├── main.go
-└── README.md
+> .
+> ├── albumrequest
+> │   └── main.go
+> ├── bookrequest
+> │   └── main.go
+> ├── main.go
+> └── README.md
 
 ## Usage
 
@@ -23,15 +23,16 @@ Visit `localhost:8080` for more info and instructions.
 
 Current responses are given as string text. Future improvements might include responses as JSON.
 
----
-GET /
+### GET /
 
+```
 parameters {
     query - what are you looking for in books and albums
     max - max number of results (default 5)
 }
+```
 
-e.g. GET /?query=hoziert&max=5
+e.g. `GET /?query=hoziert&max=5`
 
 response (as string):
 > BOOKS:
@@ -49,12 +50,12 @@ response (as string):
 >  * "Nina Cried Power - EP" by Hozier
 >  * "Take Me to Church - EP" by Hozier
 
-GET /books/avg
+### GET /books/avg
 
 response (as string):
 > Average request times for Google Books API: `<average based on last 10 requests>`ms
 
-GET /album/avg
+### GET /album/avg
 
 Work in progress
 
