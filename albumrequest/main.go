@@ -57,14 +57,14 @@ func getAlbums(query string, maxResults int64) (*[]Album, error) {
 }
 
 // QueryAlbums returns a *[]Album and logs request metrics like time
-func QueryAlbums(query string, maxResults int64) (*[]Album, error) {
+func QueryAlbums(query string, maxResults int64) *[]Album {
 	start := time.Now()
 	albums, err := getAlbums(query, maxResults)
 	if err != nil {
-		return nil, err
+		log.Println(err)
+		return nil
 	}
 	requestTime := time.Since(start)
-	fmt.Println(requestTime)
 
 	mu.Lock()
 	last10RequestTimes = append(last10RequestTimes, requestTime)
@@ -73,8 +73,6 @@ func QueryAlbums(query string, maxResults int64) (*[]Album, error) {
 	}
 	mu.Unlock()
 
-	fmt.Printf("request time: %s\n", requestTime)
-	fmt.Println(*albums)
-	//return &books, nil
-	return albums, nil
+	log.Printf("Album request and sort time: %s\n", requestTime)
+	return albums
 }
