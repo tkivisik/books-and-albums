@@ -20,6 +20,12 @@ import (
 // * Depending on requirements, expose *[]Book and *[]Album from ReturnBooksAndAlbums
 //        rather than string as it is currently.
 
+const help = `Solve your problem by:
+ * providing a query string (e.g. localhost:8080/?query=hozier&max=7
+ * visiting other endpoints:
+	localhost:8080/books/avg
+	localhost:8080/album/avg`
+
 // ReturnBooksAndAlbums is a high level function returning a formatted
 // string including books and albums sorted alphabetically
 func ReturnBooksAndAlbums(query string, maxResults int64) string {
@@ -64,11 +70,7 @@ func booksAndAlbums(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	query := q.Get("query")
 	if query == "" {
-		fmt.Fprintln(w, "Solve your problem by:")
-		fmt.Fprintln(w, "* providing a query string (e.g. localhost:8080/?query=hozier&max=7")
-		fmt.Fprintln(w, "* visiting other endpoints:")
-		fmt.Fprintln(w, "    localhost:8080/books/avg")
-		fmt.Fprintln(w, "    localhost:8080/album/avg")
+		fmt.Fprintln(w, help)
 		return
 	}
 
@@ -96,11 +98,7 @@ func albumAverage(w http.ResponseWriter, r *http.Request) {
 }
 
 func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Solve your problem by:")
-	fmt.Fprintln(w, "* providing a query string (e.g. localhost:8080/?query=hozier&max=7")
-	fmt.Fprintln(w, "* visiting other endpoints:")
-	fmt.Fprintln(w, "    localhost:8080/books/avg")
-	fmt.Fprintln(w, "    localhost:8080/album/avg")
+	fmt.Fprintln(w, help)
 }
 
 func main() {
