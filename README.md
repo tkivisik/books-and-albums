@@ -2,13 +2,15 @@
 
 ## Project Structure
 
-> .  
-> ├── albumrequest  
-> │   └── main.go  
-> ├── bookrequest  
-> │   └── main.go  
-> ├── main.go  
-> └── README.md  
+```
+.
+├── albumrequest
+│   └── main.go
+├── bookrequest
+│   └── main.go
+├── main.go
+└── README.md
+```
 
 ## Usage
 
