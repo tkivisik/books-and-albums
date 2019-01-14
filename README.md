@@ -1,31 +1,29 @@
-# The task
+# Books and Albums
 
-Using your favorite GO framework / libraries build a service, that will accept a request with text parameter on input. It will return maximum of 5 books and maximum of 5 albums that are related to the input term. The response elements will only contain title, authors(/artists) and information whether it's a book or an album.
+## Usage
 
-For albums please use the iTunes API:
-https://affiliate.itunes.apple.com/resources/documentation/itunes-store-web-service-search-api/#searching
+Spin up a server:
+```bash
+go run main.go
+```
 
-For books please use Google Books API:
-https://developers.google.com/books/docs/v1/reference/volumes/list
+Visit `localhost:8080` for more info and instructions.
 
-Sort the result by title alphabetically.
+## Testing
 
-Make sure the software is production-ready from resilience, stability and performance point of view.
+Currently, no unit tests have been written. Race conditions have been explored using:
 
-The stability of the downstream service may not be affected by the stability of the upstream services.
+```bash
+go run -race main.go
+```
 
-Results originating from one upstream service (and its stability / performance) may not affect the results originating from the other upstream service.
+## Further Development
 
-Your service needs to respond within a minute;
+See also the inline notes in code.
 
-Make sure the service:
-* is self-documenting
-* exposes metrics on response times for upstream services
-* exposes health check
-* Limit of results on upstream services must be configurable per environment and preconfigured to 5.
+* Add tests
+* Code review
+* Integrate with CICD
 
-Please document how we can run it.
-
-Please shortly document your justification of technology / mechanism choice.
-
-Good luck!
+* Further nail down requirements
+* Based on requirements, prioritize new performance improvements / new features / usability etc.
