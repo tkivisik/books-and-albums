@@ -1,16 +1,11 @@
 # Books and Albums
 
-## Project Structure
+## Goal
 
-```
-.
-├── albumrequest
-│   └── main.go
-├── bookrequest
-│   └── main.go
-├── main.go
-└── README.md
-```
+* Test out Google Books API and iTunes API
+* Output books and albums related to a search query
+* Make using the two APIs independent (concurrent, resilient)
+* Expose metrics / health checks
 
 ## Usage
 
