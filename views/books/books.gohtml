@@ -1,0 +1,9 @@
+{{ define "yield" }}
+    <h2>Books</h2>
+    <ol>
+        {{range . }}
+        <li> {{ range $i, $value := .Authors }}{{ if gt $i 0}}, {{end}}{{ . }}{{end}} - {{.Title}}</li>
+        {{end}}
+    </ol>
+{{ end }}
+
