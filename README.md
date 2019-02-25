@@ -42,30 +42,30 @@ e.g. `GET /?query=hoziert&max=5`
 > **Books**
 > 1. A. Hozier-Byrne - Better Love (from "The Legend of Tarzan")
 > 2. Mary Soames - Clementine Churchill
-> 3. - Hozier
+> 3. \- Hozier
 > 4. Perfect Papers - Keep Calm and Listen to Hozier
 > 5. Henry M. Hozier - The Seven weeks' war
 
 ### GET /metrics
 
 response (as string):
-> **Culture API**
-> **Metrics**
-> Average: 124.951304ms
+> **Culture API**  
+> **Metrics**  
+> Average: 124.951304ms  
 
 ### GET /metrics/books
 
 response (as string):
-> **Culture API**
-> **Book Request Metrics**
-> Average: 124.951304ms
+> **Culture API**  
+> **Book Request Metrics**  
+> Average: 124.951304ms  
 
 ### GET /metrics/albums
 
 response (as string):
-> **Culture API**
-> **Album Request Metrics**
-> Average: 124.951304ms
+> **Culture API**  
+> **Album Request Metrics**  
+> Average: 124.951304ms  
 
 ## Testing
 
