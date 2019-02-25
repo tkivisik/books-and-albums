@@ -31,33 +31,41 @@ parameters {
 
 e.g. `GET /?query=hoziert&max=5`
 
-response (as string):
-> BOOKS:
->  * "Better Love (from "The Legend of Tarzan")" by A. Hozier-Byrne
->  * "Hozier" by
->  * "The Seven Weeks' War" by H.M. Hozier
->  * "War in the East" by Quintin Barry
->  * "Winston and Clementine" by Mary Soames
+> **Culture API**
+> **Albums**
+> 1. Hozier - From Eden - EP
+> 2. Hozier - Hozier (Bonus Track Version)
+> 3. Hozier - Nina Cried Power - EP
+> 4. Hozier - Take Me to Church - EP
+> 5. Hozier - Wasteland, Baby!
 > 
-> 
-> ALBUMS:
->  * "From Eden - EP" by Hozier
->  * "Hozier" by Hozier
->  * "Hozier (Bonus Track Version)" by Hozier
->  * "Nina Cried Power - EP" by Hozier
->  * "Take Me to Church - EP" by Hozier
+> **Books**
+> 1. A. Hozier-Byrne - Better Love (from "The Legend of Tarzan")
+> 2. Mary Soames - Clementine Churchill
+> 3. - Hozier
+> 4. Perfect Papers - Keep Calm and Listen to Hozier
+> 5. Henry M. Hozier - The Seven weeks' war
 
-### GET /books/avg
+### GET /metrics
 
 response (as string):
-> Average request times for Google Books API: `<average based on last 10 requests>`ms
+> **Culture API**
+> **Metrics**
+> Average: 124.951304ms
 
-### GET /album/avg
+### GET /metrics/books
 
-Work in progress
+response (as string):
+> **Culture API**
+> **Book Request Metrics**
+> Average: 124.951304ms
 
----
+### GET /metrics/albums
 
+response (as string):
+> **Culture API**
+> **Album Request Metrics**
+> Average: 124.951304ms
 
 ## Testing
 
