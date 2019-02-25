@@ -8,9 +8,7 @@ import (
 
 // TODO
 // * Split up the controllers
-// * Make metrics available /metrics
 // * Health - Expose failed queries in a more interactive manner than just logs.
-// * Health - Keep special distinction between source API errors, my service errors.
 // * Write tests
 // * Depending on requirements, expose *[]Book and *[]Album from ReturnBooksAndAlbums
 //        rather than string as it is currently.
@@ -18,10 +16,17 @@ import (
 func main() {
 	cultureAPIC := controllers.NewCultureAPI()
 
-	http.HandleFunc("/", cultureAPIC.All)
-	http.HandleFunc("/albums", cultureAPIC.Albums)
-	http.HandleFunc("/books", cultureAPIC.Books)
-	//	http.HandleFunc("/metrics", cultureAPIC.Metrics) // TODO
+	//http.HandleFunc("/", cultureAPIC.All)
+	http.Handle("/", cultureAPIC.AllMetric.TimeIt(http.HandlerFunc(cultureAPIC.All)))
+	http.HandleFunc("/albums", cultureAPIC.AlbumMetric.TimeIt(cultureAPIC.Albums))
+	http.HandleFunc("/books", cultureAPIC.BookMetric.TimeIt(cultureAPIC.Books))
+	http.HandleFunc("/metrics", cultureAPIC.Metrics)
+	http.HandleFunc("/metrics/albums", cultureAPIC.AlbumMetrics)
+	http.HandleFunc("/metrics/books", cultureAPIC.BookMetrics)
+
+	go cultureAPIC.AllMetric.Listen()
+	go cultureAPIC.BookMetric.Listen()
+	go cultureAPIC.AlbumMetric.Listen()
 
 	http.ListenAndServe(":8080", nil)
 }

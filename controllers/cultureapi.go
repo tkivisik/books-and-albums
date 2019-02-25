@@ -11,55 +11,91 @@ import (
 	"sort"
 	"strconv"
 	"sync"
-	"time"
 
+	"github.com/tkivisik/books-and-albums/metrics"
 	"github.com/tkivisik/books-and-albums/views"
 	"google.golang.org/api/books/v1"
 	"google.golang.org/api/googleapi"
 )
 
+// NewCultureAPI returns a pointer to a CultureAPI Controller
 func NewCultureAPI() *CultureAPI {
 	return &CultureAPI{
-		AlbumsView: views.NewView("general", "albums/albums"),
-		BooksView:  views.NewView("general", "books/books"),
-		AllView:    views.NewView("general", "all/all"),
+		AlbumsView:       views.NewView("general", "albums/albums"),
+		BooksView:        views.NewView("general", "books/books"),
+		AllView:          views.NewView("general", "all/all"),
+		MetricsView:      views.NewView("general", "metrics/metrics"),
+		AlbumMetricsView: views.NewView("general", "metrics/albums"),
+		BookMetricsView:  views.NewView("general", "metrics/books"),
+		AlbumMetric:      metrics.NewMetric(10),
+		BookMetric:       metrics.NewMetric(10),
+		AllMetric:        metrics.NewMetric(10),
 	}
 }
 
+// CultureAPI is a controller struct
 type CultureAPI struct {
-	AlbumsView *views.View
-	BooksView  *views.View
-	AllView    *views.View
+	AlbumsView       *views.View
+	BooksView        *views.View
+	AllView          *views.View
+	MetricsView      *views.View
+	AlbumMetricsView *views.View
+	BookMetricsView  *views.View
+	AlbumMetric      *metrics.Metric
+	BookMetric       *metrics.Metric
+	AllMetric        *metrics.Metric
 }
 
-const help = `Solve your problem by:
- * providing a query string (e.g. localhost:8080/?query=hozier&max=7
- * visiting other endpoints:
-	localhost:8080/
-	localhost:8080/books
-	localhost:8080/albums`
+var ErrNoQuery = errors.New("no query parameter detected")
 
+// All handles a request to books and albums APIs
 func (c *CultureAPI) All(w http.ResponseWriter, r *http.Request) {
-	query, maxResults, err := ExtractQueryAndMaxResults(w, r)
+	query, maxResults, err := extractQueryAndMaxResults(w, r)
 	if err != nil {
+		log.Println(err)
 		return
 	}
 
+	var b []Book
+	var a []Album
+	wg := sync.WaitGroup{}
+
+	wg.Add(1)
+	go func() {
+		books, err := GetBooks(query, maxResults)
+		if err != nil {
+			log.Println(err)
+		}
+		b = *books
+		wg.Done()
+	}()
+	wg.Add(1)
+	go func() {
+		albums, err := GetAlbums(query, maxResults)
+		if err != nil {
+			log.Println(err)
+		}
+		a = *albums
+		wg.Done()
+	}()
+	wg.Wait()
+
 	data := Data{
 		Yield: BooksAndAlbums{
-			Books:  *QueryBooks(query, maxResults),
-			Albums: *QueryAlbums(query, maxResults),
+			Books:  b,
+			Albums: a,
 		},
 	}
 	c.AllView.RenderHTML(w, r, data)
 }
 
-func ExtractQueryAndMaxResults(w http.ResponseWriter, r *http.Request) (string, int64, error) {
+// extractQueryAndMaxResults parses the request parameters
+func extractQueryAndMaxResults(w http.ResponseWriter, r *http.Request) (string, int64, error) {
 	q := r.URL.Query()
 	query := q.Get("query")
 	if query == "" {
 		fmt.Fprintln(w, help)
-		return "", 0, errors.New("no query parameter detected")
+		return "", 0, ErrNoQuery
 	}
 
 	var maxResults int64
@@ -77,12 +113,18 @@ func ExtractQueryAndMaxResults(w http.ResponseWriter, r *http.Request) (string, 
 	return query, maxResults, nil
 }
 
+// Books handles Book queries
+// GET /books?query=something
 func (c *CultureAPI) Books(w http.ResponseWriter, r *http.Request) {
-	query, maxResults, err := ExtractQueryAndMaxResults(w, r)
+	query, maxResults, err := extractQueryAndMaxResults(w, r)
 	if err != nil {
 		return
 	}
-	data := Data{Yield: *QueryBooks(query, maxResults)}
+	books, err := GetBooks(query, maxResults)
+	if err != nil {
+		log.Println(err)
+	}
+	data := Data{Yield: *books}
 	c.BooksView.RenderHTML(w, r, data)
 }
 
@@ -106,48 +148,8 @@ func (t ByTitle) Len() int           { return len(t) }
 func (t ByTitle) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
 func (t ByTitle) Less(i, j int) bool { return t[i].Title < t[j].Title }
 
-// QueryBooks returns a *[]Books and logs request metrics like time.
-// Duration is measured for retrieving and sorting the books together
-// as that is the unit of work for the user of my service.
-func QueryBooks(query string, maxResults int64) *[]Book {
-	start := time.Now()
-	books, err := getBooks(query, maxResults)
-	if err != nil {
-		log.Println(err)
-		return nil
-	}
-	requestTime := time.Since(start)
-
-	mu.Lock()
-	last10RequestTimes = append(last10RequestTimes, requestTime)
-	if len(last10RequestTimes) > 10 {
-		last10RequestTimes = last10RequestTimes[1:]
-	}
-	mu.Unlock()
-
-	log.Printf("Book request and sort time: %s\n", requestTime)
-	return books
-}
-
-// AverageRequestTime returns the average of the last 10 request times
-func AverageRequestTime() time.Duration {
-	var sum time.Duration
-	mu.Lock()
-	defer mu.Unlock()
-
-	n := int64(len(last10RequestTimes))
-	if n == 0 {
-		return time.Duration(0)
-	}
-	for _, val := range last10RequestTimes {
-		sum += val
-	}
-	average := int64(sum) / n
-	return time.Duration(average)
-}
-
-// getBooks gets the books and sorts them.
-func getBooks(query string, maxResults int64) (*[]Book, error) {
+// GetBooks gets the books and sorts them.
+func GetBooks(query string, maxResults int64) (*[]Book, error) {
 	client := http.Client{}
 	svc, err := books.New(&client)
 	if err != nil {
@@ -178,12 +180,19 @@ func getBooks(query string, maxResults int64) (*[]Book, error) {
 	return &books, nil
 }
 
+// Albums handles the album requests
+// GET /albums?query=something
 func (c *CultureAPI) Albums(w http.ResponseWriter, r *http.Request) {
-	query, maxResults, err := ExtractQueryAndMaxResults(w, r)
+	query, maxResults, err := extractQueryAndMaxResults(w, r)
 	if err != nil {
 		return
 	}
-	data := Data{Yield: *QueryAlbums(query, maxResults)}
+	albums, err := GetAlbums(query, maxResults)
+	if err != nil {
+		log.Println(err)
+	}
+
+	data := Data{Yield: *albums}
 	c.AlbumsView.RenderHTML(w, r, data)
 }
 
@@ -202,13 +211,8 @@ func (a ByAlbumName) Len() int           { return len(a) }
 func (a ByAlbumName) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByAlbumName) Less(i, j int) bool { return a[i].AlbumName < a[j].AlbumName }
 
-var (
-	mu                 sync.Mutex
-	last10RequestTimes []time.Duration
-)
-
-// getAlbums retrieves and unmarshals the album data from itunes
-func getAlbums(query string, maxResults int64) (*[]Album, error) {
+// GetAlbums retrieves and unmarshals the album data from itunes
+func GetAlbums(query string, maxResults int64) (*[]Album, error) {
 	safeQuery := url.QueryEscape(query)
 	fullURL := fmt.Sprintf("https://itunes.apple.com/search?term=%s&media=music&limit=%d&entity=album", safeQuery, maxResults)
 	resp, err := http.Get(fullURL)
@@ -231,23 +235,34 @@ func getAlbums(query string, maxResults int64) (*[]Album, error) {
 	return &albums.Albums, nil
 }
 
-// QueryAlbums returns a *[]Album and logs request metrics like time
-func QueryAlbums(query string, maxResults int64) *[]Album {
-	start := time.Now()
-	albums, err := getAlbums(query, maxResults)
-	if err != nil {
-		log.Println(err)
-		return nil
-	}
-	requestTime := time.Since(start)
-
-	mu.Lock()
-	last10RequestTimes = append(last10RequestTimes, requestTime)
-	if len(last10RequestTimes) > 10 {
-		last10RequestTimes = last10RequestTimes[1:]
-	}
-	mu.Unlock()
-
-	log.Printf("Album request and sort time: %s\n", requestTime)
-	return albums
+func (c *CultureAPI) Metrics(w http.ResponseWriter, r *http.Request) {
+	c.AllMetric.GetAvg <- true
+	mean := <-c.AllMetric.Avg
+	data := Data{Yield: mean}
+	c.MetricsView.RenderHTML(w, r, data)
 }
+
+func (c *CultureAPI) AlbumMetrics(w http.ResponseWriter, r *http.Request) {
+	c.AlbumMetric.GetAvg <- true
+	mean := <-c.AlbumMetric.Avg
+	data := Data{Yield: mean}
+	c.AlbumMetricsView.RenderHTML(w, r, data)
+}
+
+func (c *CultureAPI) BookMetrics(w http.ResponseWriter, r *http.Request) {
+	c.BookMetric.GetAvg <- true
+	mean := <-c.BookMetric.Avg
+	data := Data{Yield: mean}
+	c.BookMetricsView.RenderHTML(w, r, data)
+}
+
+const help = `Solve your problem by:
+ * providing a query string (e.g. localhost:8080/?query=hozier&max=7
+ * visiting other endpoints:
+	localhost:8080/
+	localhost:8080/books
+	localhost:8080/albums
+	localhost:8080/metrics
+	localhost:8080/metrics/albums
+	localhost:8080/metrics/books
+	`
